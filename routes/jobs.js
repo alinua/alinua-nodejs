@@ -24,7 +24,7 @@ router.get("/job/:id", function(request, response, next) {
 /*
  *  Edit a job with identifier <id>
  */
-router.post("/job/:id/edit", function(request, response, next) {
+router.post("/edit/:id", function(request, response, next) {
     try {
         var data = jsonfile.readFileSync("data/jobs.json");
 

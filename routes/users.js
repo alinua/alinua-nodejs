@@ -57,7 +57,7 @@ router.get("/user/:id", function(request, response, next) {
 /*
  *  Edit a user with identifier <id>
  */
-router.post("/user/:id/edit", function(request, response, next) {
+router.post("/edit/:id", function(request, response, next) {
     try {
         var data = jsonfile.readFileSync("data/users.json");
 
