@@ -10,6 +10,8 @@ var config      = require('./config.js')
 
 var router      = express.Router();
 
+console.info(config)
+
 /*
  *  Generate JSON Web Token
  */
