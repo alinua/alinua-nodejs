@@ -38,3 +38,6 @@ jspm_packages
 
 # Data
 data/*.json
+
+# Configuration file
+routes/config.js
