@@ -1,3 +1,7 @@
+/* --------------------------------------------------------------------------
+ *  Modules
+ * -------------------------------------------------------------------------- */
+
 var fs          = require('fs');
 var http        = require('http');
 var moment      = require('moment');
@@ -10,10 +14,24 @@ var config      = require('./config.js')
 
 var router      = express.Router();
 
-/*
- *  Generate JSON Web Token
- */
+/* --------------------------------------------------------------------------
+ *  Functions
+ * -------------------------------------------------------------------------- */
+
 function createJWT(user) {
+    /*  Generate a JSON Web Token from user data
+     *
+     *  Parameters
+     *  ----------
+     *  user : json
+     *      User data
+     *
+     *  Returns
+     *  -------
+     *  json
+     *      User token
+     */
+
     var payload = {
         sub: user._id,
         iat: moment().unix(),
@@ -23,34 +41,46 @@ function createJWT(user) {
     return jwt.encode(payload, config.secret_key);
 }
 
-/*
- *  Authentificate a LinkedIn user
- */
+/* --------------------------------------------------------------------------
+ *  Routes
+ * -------------------------------------------------------------------------- */
+
 router.post("/linkedin", function(req, res) {
-    console.info("Catch linkedin connection request");
+    /*  Authenticate user from a LinkedIn Account
+     *
+     *  http://localhost:3000/auth/linkedin/
+     *
+     *  Returns
+     *  -------
+     *  json
+     *      Token structure
+     */
 
     var apiParams = ":(id,firstName,lastName,headline,location,industry," +
         "summary,specialties,positions,picture-url,email-address," +
         "picture-urls::(original),num-connections,num-connections-capped," +
-        "public-profile-url)"
+        "public-profile-url)";
 
+    // Generate parameters for LinkedIn request
     var params = {
         code: req.body.code,
         client_id: req.body.clientId,
+        grant_type: "authorization_code",
         redirect_uri: req.body.redirectUri,
-        client_secret: config.secret_key,
-        grant_type: "authorization_code"
-    }
+        client_secret: config.secret_key
+    };
 
     try {
         // Step 1 : Exchange authorization code for access token
         request.post(config.token_url, { form: params, json: true },
             function(err, response, body) {
 
+            // An error occurs
             if(response.statusCode !== 200) {
                 return res.sendStatus(response.statusCode);
             }
 
+            // Generate parameters from access token
             var params = {
                 oauth2_access_token: body.access_token,
                 format: 'json'
@@ -62,26 +92,24 @@ router.post("/linkedin", function(req, res) {
 
                 var id = profile.id;
 
-                if(fs.existsSync("data/users.json")) {
-                    var data = jsonfile.readFileSync("data/users.json");
-                }
-                else {
-                    var data = [];
-                }
+                // Fetch users
+                var users = [];
+                if(fs.existsSync("data/users.json"))
+                    users = jsonfile.readFileSync("data/users.json");
 
                 // Add an empty json structure when data is empty
-                if(data.length == 0)
-                    data.push({});
+                if(users.length == 0)
+                    users.push({});
 
                 // Register profile
-                if(!(id in data[0]))
-                    data[0][id] = profile;
+                // if(!(id in users[0]))
+                    // users[0]["profile"] = profile;
 
-                // Update profile
-                else
-                    data[0][id] = profile;
+                // Update user profile
+                users[0][id]["profile"] = profile;
 
-                jsonfile.writeFileSync("data/users.json", data, { spaces: 4 })
+                // Write json content
+                jsonfile.writeFileSync("data/users.json", users, { spaces: 4 })
 
                 // Step 3 : Generate a token from profile
                 var token = createJWT(profile);
@@ -93,57 +121,6 @@ router.post("/linkedin", function(req, res) {
     catch(error) {
         console.error(error);
         res.sendStatus(503);
-    }
-});
-
-/*
- *  Register a new user
- */
-router.post("/signup", function(request, response, next) {
-    try {
-        var data = jsonfile.readFileSync("data/users.json");
-
-        var size = data.length;
-        var post = request.body;
-
-        var today = new Date();
-        var day = today.getDate()
-        var year = today.getFullYear()
-        var month = today.getMonth()
-
-        // Append a new user in json array
-        data.push({
-            id: size,
-            register: year + "-" + month + "-" + day
-        });
-
-        for(key in post) {
-            if(post[key] != undefined && post[key].length > 0) {
-                data[size][key] = post[key];
-            }
-        }
-
-        jsonfile.writeFileSync("data/users.json", data, { spaces: 4 })
-
-        response.send({ id: size });
-    }
-    catch(error) {
-        console.error(error);
-        response.sendStatus(503);
-    }
-});
-
-/*
- *  Get user profile
- */
-
-router.post("/profile", function(request, response, next) {
-    try {
-
-    }
-    catch(error) {
-        console.error(error);
-        response.sendStatus(503);
     }
 });
 
