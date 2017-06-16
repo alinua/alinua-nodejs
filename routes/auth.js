@@ -101,9 +101,25 @@ router.post("/linkedin", function(req, res) {
                 if(users.length == 0)
                     users.push({});
 
-                // Register profile
-                // if(!(id in users[0]))
-                    // users[0]["profile"] = profile;
+                // Get inbox messages
+                var inbox = [];
+                if(fs.existsSync("data/inbox.json"))
+                    inbox = jsonfile.readFileSync("data/inbox.json");
+
+                // User has some messages
+                var unread = 0;
+                var messages = [];
+
+                if(id in inbox[0]) {
+                    // Get unread messages count
+                    messages = inbox[0][id];
+
+                    for(message in messages) {
+                        if(!messages[message].status) {
+                            unread += 1;
+                        }
+                    }
+                }
 
                 // Update user profile
                 users[0][id]["profile"] = profile;
@@ -114,10 +130,75 @@ router.post("/linkedin", function(req, res) {
                 // Step 3 : Generate a token from profile
                 var token = createJWT(profile);
 
-                res.json(JSON.stringify({ token: token, profile: profile }));
+                res.json(JSON.stringify({
+                    user: users[0][id],
+                    token: token,
+                    unread: unread,
+                    messages: messages }));
             });
         });
     }
+    catch(error) {
+        console.error(error);
+        res.sendStatus(503);
+    }
+});
+
+router.get("/debug", function(req, res) {
+    /*  Authenticate quickly an user from database
+     *
+     *  http://localhost:3000/auth/debug/
+     *
+     *  Returns
+     *  -------
+     *  json
+     *      Token structure
+     */
+
+    var id = "WRITE_AN_IDENTIFIER";
+
+    try {
+        // Fetch users
+        var users = [];
+        if(fs.existsSync("data/users.json"))
+            users = jsonfile.readFileSync("data/users.json");
+
+        // Add an empty json structure when data is empty
+        if(users.length == 0)
+            users.push({});
+
+        // Get inbox messages
+        var inbox = [];
+        if(fs.existsSync("data/inbox.json"))
+            inbox = jsonfile.readFileSync("data/inbox.json");
+
+        // User has some messages
+        var unread = 0;
+        var messages = [];
+
+        if(id in inbox[0]) {
+            // Get unread messages count
+            messages = inbox[0][id];
+
+            for(message in messages) {
+                if(!messages[message].status) {
+                    unread += 1;
+                }
+            }
+        }
+
+        var profile = users[0][id]["profile"];
+
+        // Step 3 : Generate a token from profile
+        var token = createJWT(profile);
+
+        res.json(JSON.stringify({
+            user: users[0][id],
+            token: token,
+            unread: unread,
+            messages: messages }));
+    }
+
     catch(error) {
         console.error(error);
         res.sendStatus(503);

@@ -167,15 +167,10 @@ router.get("/job/:id/status/:status", function(request, response, next) {
     }
 });
 
-router.post("/edit/:id", function(request, response, next) {
+router.post("/edit", function(request, response, next) {
     /*  Edit a specific job
      *
-     *  http://localhost:3000/jobs/edit/<id>
-     *
-     *  Parameters
-     *  ----------
-     *  id : int
-     *      Job identifier
+     *  http://localhost:3000/jobs/edit
      *
      *  Returns
      *  -------
@@ -189,45 +184,26 @@ router.post("/edit/:id", function(request, response, next) {
         if(fs.existsSync("data/jobs.json"))
             jobs = jsonfile.readFileSync("data/jobs.json");
 
-        // Check jobs
-        if(jobs.length > 0) {
+        // Job data
+        var post = request.body;
 
-            // Job data
-            var post = request.body;
+        var id = jobs.length + 1;
 
-            // Get identifier from URL
-            var id = request.params["id"];
+        // Alias for quick access
+        // var job = jobs[id];
 
-            // Job exists in database
-            if(id in jobs[0]) {
+        // for(key in post) {
+            // if(post[key] != undefined && post[key].length > 0)
+                // job[key] = post[key];
 
-                // Alias for quick access
-                var job = jobs[id];
+            // else
+                // delete job[key];
+        // }
 
-                for(key in post) {
-                    if(post[key] != undefined && post[key].length > 0)
-                        job[key] = post[key];
+        // Write json content
+        // jsonfile.writeFileSync("data/jobs.json", jobs, { spaces: 4 })
 
-                    else
-                        delete job[key];
-                }
-
-                // Write json content
-                jsonfile.writeFileSync("data/jobs.json", jobs, { spaces: 4 })
-
-                response.sendStatus(200);
-            }
-
-            // Job not exists in database
-            else {
-                response.sendStatus(404);
-            }
-        }
-
-        // No job in database
-        else {
-            response.sendStatus(503);
-        }
+        response.sendStatus(200);
     }
     catch(error) {
         console.error(error);

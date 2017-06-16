@@ -77,25 +77,17 @@ router.get("/user/:id", function(request, response, next) {
 
             // User exists in database
             if(id in users[0]) {
+                // Fetch user projects
+                var projects = [];
+                if(fs.existsSync("data/projects.json"))
+                    projects = jsonfile.readFileSync("data/projects.json");
 
-                // Get inbox messages
-                var inbox = [];
-                if(fs.existsSync("data/inbox.json"))
-                    inbox = jsonfile.readFileSync("data/inbox.json");
+                users[0][id].projects = [];
 
-                // User has some messages
-                if(id in inbox[0]) {
-                    var unread = 0;
-
-                    // Get unread messages count
-                    for(message in inbox[0][id]) {
-                        if(!inbox[0][id][message].status) {
-                            unread += 1;
-                        }
+                for(project in projects) {
+                    if(projects[project].owner == id) {
+                        users[0][id].projects.push(projects[project]);
                     }
-
-                    if(unread > 0)
-                        users[0][id]["unread"] = unread;
                 }
 
                 // Send json structure

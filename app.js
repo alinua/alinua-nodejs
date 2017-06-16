@@ -11,6 +11,7 @@ var auth            = require('./routes/auth');
 var jobs            = require('./routes/jobs');
 var inbox           = require('./routes/inbox');
 var users           = require('./routes/users');
+var projects        = require('./routes/projects');
 
 var app             = express();
 
@@ -31,6 +32,7 @@ app.use('/auth', auth);
 app.use('/jobs', jobs);
 app.use('/inbox', inbox);
 app.use('/users', users);
+app.use('/projects', projects);
 
 /* --------------------------------------------------------------------------
  *  Functions

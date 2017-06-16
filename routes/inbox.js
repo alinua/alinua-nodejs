@@ -65,17 +65,6 @@ router.get("/user/:id", function(request, response, next) {
                         // Get message content
                         var message = inbox[0][id][message_id]
 
-                        // Fetch job content
-                        if(message.type == "job") {
-                            if(message.data.id in jobs[0]) {
-                                message.data = jobs[0][message.data.id];
-                            }
-                        }
-
-                        if(message.user in users[0]) {
-                            message.user = users[0][message.user];
-                        }
-
                         results.push(message);
                     }
 
