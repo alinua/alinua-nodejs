@@ -12,10 +12,10 @@ var router      = express.Router();
  *  Routes
  * -------------------------------------------------------------------------- */
 
-router.get("/user/:id", function(request, response, next) {
+router.get("/:id", function(request, response, next) {
     /*  Return the user inbox messages list
      *
-     *  http://localhost:3000/inbox/user/<id>
+     *  http://localhost:3000/inbox/<id>
      *
      *  Returns
      *  -------
@@ -46,30 +46,15 @@ router.get("/user/:id", function(request, response, next) {
                 if(fs.existsSync("data/inbox.json"))
                     inbox = jsonfile.readFileSync("data/inbox.json");
 
-                // No message in inbox
-                if(inbox.length == 0 || !(id in inbox[0])) {
-                    response.json({});
-                }
-
-                // Send user messages
-                else {
-
-                    // Fetch jobs
-                    var jobs = [];
-                    if(fs.existsSync("data/jobs.json"))
-                        var jobs = jsonfile.readFileSync("data/jobs.json");
-
-                    // Fetch each message for user
-                    for(message_id in inbox[0][id]) {
-
-                        // Get message content
-                        var message = inbox[0][id][message_id]
-
-                        results.push(message);
+                if(inbox.length > 0) {
+                    for(message in inbox) {
+                        if(inbox[message].owner == id) {
+                            results.push(inbox[message]);
+                        }
                     }
-
-                    response.json(results);
                 }
+
+                response.json(results);
             }
 
             // This user not exists
@@ -89,7 +74,7 @@ router.get("/user/:id", function(request, response, next) {
     }
 });
 
-router.get("/user/:u_id/:m_id", function(request, response, next) {
+router.get("/:u_id/:m_id", function(request, response, next) {
     /*  Return the jobs list
      *
      *  http://localhost:3000/jobs/
@@ -101,25 +86,117 @@ router.get("/user/:u_id/:m_id", function(request, response, next) {
      */
 
     try {
-        // Fetch messages
-        var inbox = [];
-        if(fs.existsSync("data/inbox.json"))
-            inbox = jsonfile.readFileSync("data/inbox.json");
+        // Fetch users
+        var users = [];
+        if(fs.existsSync("data/users.json"))
+            users = jsonfile.readFileSync("data/users.json");
 
-        // Check messages
-        if(inbox.length > 0) {
+        // Check users
+        if(users.length > 0) {
+
+            // Get user identifier from URL
+            var u_id = request.params["u_id"];
+            // Get message identifier from URL
+            var m_id = parseInt(request.params["m_id"]);
+
+            // User exists in database
+            if(u_id in users[0]) {
+
+                var results = undefined;
+
+                // Fetch messages
+                var inbox = [];
+                if(fs.existsSync("data/inbox.json"))
+                    inbox = jsonfile.readFileSync("data/inbox.json");
+
+                if(inbox.length > 0) {
+                    for(message in inbox) {
+                        if(inbox[message].owner == u_id && inbox[message].id == m_id) {
+                            results == inbox[message];
+                            break;
+                        }
+                    }
+                }
+
+                if(results != undefined)
+                    response.json(results);
+
+                else
+                    response.sendStatus(404);
+            }
+
+            // This user not exists
+            else {
+                response.sendStatus(404);
+            }
+        }
+
+        // No users register in database
+        else {
+            response.sendStatus(503);
+        }
+    }
+    catch(error) {
+        console.error(error);
+        response.sendStatus(503);
+    }
+});
+
+router.get("/status/:u_id/:m_id", function(request, response, next) {
+    /*  Return the jobs list
+     *
+     *  http://localhost:3000/jobs/
+     *
+     *  Returns
+     *  -------
+     *  json
+     *      Jobs list as json structure
+     */
+
+    try {
+        // Fetch users
+        var users = [];
+        if(fs.existsSync("data/users.json"))
+            users = jsonfile.readFileSync("data/users.json");
+
+        // Check users
+        if(users.length > 0) {
 
             // Get user identifier from URL
             var u_id = request.params["u_id"];
             // Get message identifier from URL
             var m_id = request.params["m_id"];
 
-            // User or message exists in database
-            if(u_id in inbox[0] && m_id in inbox[0][u_id]) {
-                response.json(inbox[0][u_id][m_id]);
+            // Fetch messages
+            var inbox = [];
+            if(fs.existsSync("data/inbox.json"))
+                inbox = jsonfile.readFileSync("data/inbox.json");
+
+            // Check messages
+            if(inbox.length > 0) {
+
+                var results = undefined;
+
+                for(message in inbox) {
+                    if(inbox[message].owner == u_id && inbox[message].id == m_id) {
+                        results = inbox[message];
+                        break;
+                    }
+                }
+
+                if(results != undefined) {
+                    results.status = !results.status;
+
+                    jsonfile.writeFileSync("data/inbox.json", inbox, { spaces: 4 })
+
+                    response.json({ "status": results.status });
+                }
+
+                else
+                    response.sendStatus(404);
             }
 
-            // User or message not exists in database
+            // This user not exists
             else {
                 response.sendStatus(404);
             }
@@ -136,47 +213,43 @@ router.get("/user/:u_id/:m_id", function(request, response, next) {
     }
 });
 
-router.get("/user/:u_id/:m_id/status", function(request, response, next) {
-    /*  Return the jobs list
+router.post("/delete", function(request, response, next) {
+    /*  Remove a specific inbox
      *
-     *  http://localhost:3000/jobs/
-     *
-     *  Returns
-     *  -------
-     *  json
-     *      Jobs list as json structure
+     *  http://localhost:3000/messages/delete
      */
 
     try {
         // Fetch messages
-        var inbox = [];
+        var messages = [];
         if(fs.existsSync("data/inbox.json"))
-            inbox = jsonfile.readFileSync("data/inbox.json");
+            messages = jsonfile.readFileSync("data/inbox.json");
 
-        // Check messages
-        if(inbox.length > 0) {
+        // Project identifier
+        if("id" in request.body) {
+            var id = request.body.id;
 
-            // Get user identifier from URL
-            var u_id = request.params["u_id"];
-            // Get message identifier from URL
-            var m_id = request.params["m_id"];
+            var inbox = undefined;
 
-            // User or message exists in database
-            if(u_id in inbox[0] && m_id in inbox[0][u_id]) {
-                inbox[0][u_id][m_id].status = !inbox[0][u_id][m_id].status;
-
-                jsonfile.writeFileSync("data/inbox.json", inbox, { spaces: 4 })
-
-                response.json({ "status": inbox[0][u_id][m_id].status });
+            for(element in messages) {
+                if(messages[element].id == id) {
+                    inbox = element;
+                    break
+                }
             }
 
-            // User or message not exists in database
+            if(inbox != undefined) {
+                messages.splice(inbox, 1);
+
+                // Write json content
+                jsonfile.writeFileSync("data/inbox.json", messages, { spaces: 4 });
+
+                response.sendStatus(200);
+            }
             else {
                 response.sendStatus(404);
             }
         }
-
-        // No message in database
         else {
             response.sendStatus(503);
         }

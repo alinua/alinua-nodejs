@@ -87,8 +87,11 @@ router.post("/linkedin", function(req, res) {
             };
 
             // Step 2 : Retrieve profile information about the current user.
-            request.get({ url: config.api_url + apiParams, qs: params, json: true },
-                function(err, response, profile) {
+            request.get({
+                    url: config.api_url + apiParams,
+                    qs: params,
+                    json: true
+                }, function(err, response, profile) {
 
                 var id = profile.id;
 
@@ -106,23 +109,42 @@ router.post("/linkedin", function(req, res) {
                 if(fs.existsSync("data/inbox.json"))
                     inbox = jsonfile.readFileSync("data/inbox.json");
 
+                // Send a message for new user
+                if(!(id in users[0])) {
+                    inbox.push({
+                        "id": inbox.length + 1,
+                        "owner": id,
+                        "status": false,
+                        "date": new Date(),
+                        "data": {
+                            "title": "Bienvenue sur AlinUA",
+                            "content": "Voici le message de bienvenue d'Alinua"
+                        }
+                    });
+
+                    // Write json content
+                    jsonfile.writeFileSync(
+                        "data/inbox.json", inbox, { spaces: 4 });
+
+                    users[0][id] = {
+                        status: true,
+                        register: new Date(),
+                        profile: {}
+                    };
+                }
+
                 // User has some messages
                 var unread = 0;
                 var messages = [];
 
-                if(id in inbox[0]) {
-                    // Get unread messages count
-                    messages = inbox[0][id];
-
-                    for(message in messages) {
-                        if(!messages[message].status) {
-                            unread += 1;
-                        }
+                for(message in inbox) {
+                    if(!inbox[message].status && inbox[message].owner == id) {
+                        unread += 1;
                     }
                 }
 
                 // Update user profile
-                users[0][id]["profile"] = profile;
+                users[0][id].profile = profile;
 
                 // Write json content
                 jsonfile.writeFileSync("data/users.json", users, { spaces: 4 })
@@ -167,36 +189,41 @@ router.get("/debug", function(req, res) {
         if(users.length == 0)
             users.push({});
 
-        // Get inbox messages
-        var inbox = [];
-        if(fs.existsSync("data/inbox.json"))
-            inbox = jsonfile.readFileSync("data/inbox.json");
+        if(users[0][id].status) {
+            // Get inbox messages
+            var inbox = [];
+            if(fs.existsSync("data/inbox.json"))
+                inbox = jsonfile.readFileSync("data/inbox.json");
 
-        // User has some messages
-        var unread = 0;
-        var messages = [];
+            // User has some messages
+            var unread = 0;
+            var messages = [];
 
-        if(id in inbox[0]) {
-            // Get unread messages count
-            messages = inbox[0][id];
+            if(id in inbox[0]) {
+                // Get unread messages count
+                messages = inbox[0][id];
 
-            for(message in messages) {
-                if(!messages[message].status) {
-                    unread += 1;
+                for(message in messages) {
+                    if(!messages[message].status) {
+                        unread += 1;
+                    }
                 }
             }
+
+            var profile = users[0][id]["profile"];
+
+            // Step 3 : Generate a token from profile
+            var token = createJWT(profile);
+
+            res.json(JSON.stringify({
+                user: users[0][id],
+                token: token,
+                unread: unread,
+                messages: messages }));
         }
-
-        var profile = users[0][id]["profile"];
-
-        // Step 3 : Generate a token from profile
-        var token = createJWT(profile);
-
-        res.json(JSON.stringify({
-            user: users[0][id],
-            token: token,
-            unread: unread,
-            messages: messages }));
+        else {
+            res.sendStatus(401);
+        }
     }
 
     catch(error) {

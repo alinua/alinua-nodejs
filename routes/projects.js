@@ -129,4 +129,151 @@ router.get("/project/:id", function(request, response, next) {
     }
 });
 
+router.post("/edit", function(request, response, next) {
+    /*  Edit a specific project
+     *
+     *  http://localhost:3000/projects/edit
+     *
+     *  Returns
+     *  -------
+     *  json
+     *      Project data
+     */
+
+    try {
+        // Fetch projects
+        var projects = [];
+        if(fs.existsSync("data/projects.json"))
+            projects = jsonfile.readFileSync("data/projects.json");
+
+        // Project identifier
+        if("id" in request.body) {
+            var id = request.body.id;
+            var edit = true;
+        }
+        else {
+            var id = projects.length + 1;
+            var edit = false;
+        }
+
+        // Project data
+        if(!edit) {
+            projects.push({
+                "id": parseInt(id),
+                "status": false,
+                "owner": request.body.owner,
+                "date": new Date().toLocaleString(),
+                "title": request.body.title,
+                "description": {
+                    "content": request.body.description,
+                    "url": request.body.url
+                }
+            });
+
+            // Write json content
+            jsonfile.writeFileSync("data/projects.json", projects, { spaces: 4 });
+
+            response.json(JSON.stringify({
+                project: parseInt(id) }));
+        }
+        else {
+            var project = undefined;
+
+            for(element in projects) {
+                if(projects[element].id == id) {
+                    project = projects[element];
+                    break
+                }
+            }
+
+            if(project != undefined) {
+                data = {
+                    "id": parseInt(request.body.id),
+                    "status": request.body.status,
+                    "title": request.body.title,
+                    "description": {
+                        "content": request.body.description,
+                        "url": request.body.url
+                    }
+                };
+
+                for(key in data) {
+                    if(data[key] == undefined)
+                        delete data[key];
+
+                    if(key == "description") {
+                        for(subkey in data[key]) {
+                            if(data[key][subkey] != undefined)
+                                project[key][subkey] = data[key][subkey];
+                        }
+                    }
+                    else if(data[key] != undefined) {
+                        project[key] = data[key];
+                    }
+                }
+
+                // Write json content
+                jsonfile.writeFileSync("data/projects.json", projects, { spaces: 4 });
+
+                response.json(JSON.stringify({
+                    project: parseInt(id) }));
+            }
+            else {
+                response.sendStatus(404);
+            }
+        }
+    }
+    catch(error) {
+        console.error(error);
+        response.sendStatus(503);
+    }
+});
+
+router.post("/delete", function(request, response, next) {
+    /*  Remove a specific project
+     *
+     *  http://localhost:3000/projects/delete
+     */
+
+    try {
+        // Fetch projects
+        var projects = [];
+        if(fs.existsSync("data/projects.json"))
+            projects = jsonfile.readFileSync("data/projects.json");
+
+        // Project identifier
+        if("id" in request.body) {
+            var id = request.body.id;
+
+            var project = undefined;
+
+            for(element in projects) {
+                if(projects[element].id == id) {
+                    project = element;
+                    break
+                }
+            }
+
+            if(project != undefined) {
+                projects.splice(project, 1);
+
+                // Write json content
+                jsonfile.writeFileSync("data/projects.json", projects, { spaces: 4 });
+
+                response.sendStatus(200);
+            }
+            else {
+                response.sendStatus(404);
+            }
+        }
+        else {
+            response.sendStatus(503);
+        }
+    }
+    catch(error) {
+        console.error(error);
+        response.sendStatus(503);
+    }
+});
+
 module.exports = router;

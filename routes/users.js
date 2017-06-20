@@ -111,22 +111,15 @@ router.get("/user/:id", function(request, response, next) {
     }
 });
 
-router.get("/user/:id/status/:status", function(request, response, next) {
-    /*  Change status for a specific user
+router.post("/edit", function(request, response, next) {
+    /*  Edit a specific user
      *
-     *  http://localhost:3000/users/<id>/status/<status>
-     *
-     *  Parameters
-     *  ----------
-     *  id : int
-     *      Job identifier
-     *  status : bool
-     *      Job status
+     *  http://localhost:3000/users/edit
      *
      *  Returns
      *  -------
      *  json
-     *      Job data
+     *      User data
      */
 
     try {
@@ -135,30 +128,18 @@ router.get("/user/:id/status/:status", function(request, response, next) {
         if(fs.existsSync("data/users.json"))
             users = jsonfile.readFileSync("data/users.json");
 
-        // Check users
-        if(users.length > 0) {
+        // User identifier
+        if("id" in request.body) {
+            var id = request.body.id;
 
-            // Get identifier from URL
-            var id = request.params["id"];
-            var status = (request.params["status"] == 'true');
+            users[0][id].status = request.body.status;
 
-            // Job exists in database
-            if(id in users[0]) {
-                users[0][id]["status"] = status;
+            // Write json content
+            jsonfile.writeFileSync("data/users.json", users, { spaces: 4 });
 
-                // Write json content
-                jsonfile.writeFileSync("data/users.json", users, { spaces: 4 })
-
-                response.sendStatus(200);
-            }
-
-            // Job not exists in database
-            else {
-                response.sendStatus(404);
-            }
+            response.json(JSON.stringify({
+                status: request.body.status }));
         }
-
-        // No user in database
         else {
             response.sendStatus(503);
         }

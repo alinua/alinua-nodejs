@@ -29,9 +29,6 @@ router.get("/", function(request, response, next) {
         if(fs.existsSync("data/jobs.json"))
             jobs = jsonfile.readFileSync("data/jobs.json");
 
-        // Json structure
-        var results = [];
-
         // Fetch jobs data and push them into results
         if(jobs.length > 0) {
 
@@ -41,16 +38,15 @@ router.get("/", function(request, response, next) {
                 users = jsonfile.readFileSync("data/users.json");
 
             // Replace user attribute in job with user data
-            for(element in jobs[0]) {
+            for(element in jobs) {
+                var job = jobs[element];
 
-                if("from" in jobs[0][element])
-                    jobs[0][element]["user"] = users[0][jobs[0][element]["from"]];
-
-                results.push(jobs[0][element]);
+                if("owner" in job)
+                    job["owner"] = users[0][job["owner"]];
             }
         }
 
-        response.json(results);
+        response.json(jobs);
     }
     catch(error) {
         console.error(error);
@@ -81,7 +77,7 @@ router.get("/job/:id", function(request, response, next) {
             jobs = jsonfile.readFileSync("data/jobs.json");
 
         // Json structure
-        var results = undefined;
+        var job = undefined;
 
         // Fetch jobs data and push them into results
         if(jobs.length > 0) {
@@ -95,70 +91,26 @@ router.get("/job/:id", function(request, response, next) {
                 users = jsonfile.readFileSync("data/users.json");
 
             // Replace user attribute in job with user data
-            if("from" in jobs[0][id])
-                jobs[0][id]["user"] = users[0][jobs[0][id]["from"]];
+            for(element in jobs) {
 
-            results = jobs[0][id];
-        }
-
-        response.json(results);
-    }
-    catch(error) {
-        console.error(error);
-        response.sendStatus(503);
-    }
-});
-
-router.get("/job/:id/status/:status", function(request, response, next) {
-    /*  Change status for a specific job
-     *
-     *  http://localhost:3000/jobs/<id>/status/<status>
-     *
-     *  Parameters
-     *  ----------
-     *  id : int
-     *      Job identifier
-     *  status : bool
-     *      Job status
-     *
-     *  Returns
-     *  -------
-     *  json
-     *      Job data
-     */
-
-    try {
-        // Fetch jobs
-        var jobs = [];
-        if(fs.existsSync("data/jobs.json"))
-            jobs = jsonfile.readFileSync("data/jobs.json");
-
-        // Check jobs
-        if(jobs.length > 0) {
-
-            // Get identifier from URL
-            var id = request.params["id"];
-            var status = (request.params["status"] == 'true');
-
-            // Job exists in database
-            if(id in jobs[0]) {
-                jobs[0][id]["status"] = status;
-
-                // Write json content
-                jsonfile.writeFileSync("data/jobs.json", jobs, { spaces: 4 })
-
-                response.sendStatus(200);
+                if(jobs[element].id == id) {
+                    job = jobs[element];
+                    break;
+                }
             }
 
-            // Job not exists in database
+            // Replace user attribute in project with user data
+            if(!(job == undefined)) {
+
+                // Replace user attribute in job with user data
+                if("owner" in job)
+                    job["owner"] = users[0][job["owner"]];
+
+                response.json(job);
+            }
             else {
                 response.sendStatus(404);
             }
-        }
-
-        // No job in database
-        else {
-            response.sendStatus(503);
         }
     }
     catch(error) {
@@ -184,26 +136,152 @@ router.post("/edit", function(request, response, next) {
         if(fs.existsSync("data/jobs.json"))
             jobs = jsonfile.readFileSync("data/jobs.json");
 
+        // Job identifier
+        if("id" in request.body) {
+            var id = request.body.id;
+            var edit = true;
+        }
+        else {
+            var id = jobs.length + 1;
+            var edit = false;
+        }
+
+        console.info(request.body);
+
         // Job data
-        var post = request.body;
+        if(!edit) {
+            jobs.push({
+                "id": parseInt(id),
+                "status": false,
+                "owner": request.body.owner,
+                "date": new Date().toLocaleString(),
+                "title": request.body.title,
+                "description": {
+                    "content": request.body.description,
+                    "tags": request.body.tags.split(" ")
+                },
+                "location": {
+                    "name": request.body.city,
+                    "country": request.body.country
+                },
+                "validity": new Date(
+                    parseInt(request.body.year),
+                    parseInt(request.body.month),
+                    parseInt(request.body.day)).toLocaleString()
+            });
 
-        var id = jobs.length + 1;
+            // Write json content
+            jsonfile.writeFileSync("data/jobs.json", jobs, { spaces: 4 });
 
-        // Alias for quick access
-        // var job = jobs[id];
+            response.json(JSON.stringify({
+                job: parseInt(id) }));
+        }
+        else {
+            var job = undefined;
 
-        // for(key in post) {
-            // if(post[key] != undefined && post[key].length > 0)
-                // job[key] = post[key];
+            for(element in jobs) {
+                if(jobs[element].id == id) {
+                    job = jobs[element];
+                    break
+                }
+            }
 
-            // else
-                // delete job[key];
-        // }
+            if(job != undefined) {
+                data = {
+                    "id": parseInt(request.body.id),
+                    "status": request.body.status,
+                    "title": request.body.title,
+                    "description": {
+                        "content": request.body.description,
+                        "tags": request.body.tags
+                    },
+                    "location": {
+                        "name": request.body.city,
+                        "country": request.body.country
+                    },
+                    "validity": new Date(
+                        parseInt(request.body.year),
+                        parseInt(request.body.month),
+                        parseInt(request.body.day)).toLocaleString()
+                };
 
-        // Write json content
-        // jsonfile.writeFileSync("data/jobs.json", jobs, { spaces: 4 })
+                for(key in data) {
+                    if(data[key] == undefined)
+                        delete data[key];
 
-        response.sendStatus(200);
+                    if(key == "description" || key == "location") {
+                        for(subkey in data[key]) {
+                            if(data[key]["tags"] != undefined)
+                                job[key]["tags"] = data[key]["tags"].split(" ");
+                            else if(data[key][subkey] != undefined)
+                                job[key][subkey] = data[key][subkey];
+                        }
+                    }
+                    else if(key == "validity" && data[key] != "Invalid Date") {
+                        job[key] = data[key];
+                    }
+                    else if(data[key] != undefined) {
+                        job[key] = data[key];
+                    }
+                }
+
+                // Write json content
+                jsonfile.writeFileSync("data/jobs.json", jobs, { spaces: 4 });
+
+                response.json(JSON.stringify({
+                    job: parseInt(id) }));
+            }
+            else {
+                response.sendStatus(404);
+            }
+        }
+    }
+    catch(error) {
+        console.error(error);
+        response.sendStatus(503);
+    }
+});
+
+router.post("/delete", function(request, response, next) {
+    /*  Remove a specific job
+     *
+     *  http://localhost:3000/jobs/delete
+     */
+
+    try {
+        // Fetch jobs
+        var jobs = [];
+        if(fs.existsSync("data/jobs.json"))
+            jobs = jsonfile.readFileSync("data/jobs.json");
+
+        // Project identifier
+        if("id" in request.body) {
+            var id = request.body.id;
+
+            var job = undefined;
+
+            for(element in jobs) {
+                if(jobs[element].id == id) {
+                    job = element;
+                    break
+                }
+            }
+
+            if(job != undefined) {
+                jobs.splice(job, 1);
+
+                // Write json content
+                jsonfile.writeFileSync("data/jobs.json", jobs, { spaces: 4 });
+
+                response.sendStatus(200);
+            }
+            else {
+                response.sendStatus(404);
+            }
+        }
+        else {
+            response.sendStatus(503);
+        }
     }
     catch(error) {
         console.error(error);
