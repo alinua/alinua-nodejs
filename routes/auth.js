@@ -115,7 +115,7 @@ router.post("/linkedin", function(req, res) {
                         "id": inbox.length + 1,
                         "owner": id,
                         "status": false,
-                        "date": new Date(),
+                        "date": new Date().toLocaleString(),
                         "data": {
                             "title": "Bienvenue sur AlinUA",
                             "content": "Voici le message de bienvenue d'Alinua"
@@ -128,7 +128,7 @@ router.post("/linkedin", function(req, res) {
 
                     users[0][id] = {
                         status: true,
-                        register: new Date(),
+                        register: new Date().toLocaleString(),
                         profile: {}
                     };
                 }

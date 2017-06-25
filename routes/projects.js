@@ -152,7 +152,11 @@ router.post("/edit", function(request, response, next) {
             var edit = true;
         }
         else {
-            var id = projects.length + 1;
+            var id = 1;
+            for(project in projects) {
+                if(projects[project].id >= id)
+                    id = projects[project].id + 1;
+            }
             var edit = false;
         }
 
@@ -167,7 +171,10 @@ router.post("/edit", function(request, response, next) {
                 "description": {
                     "content": request.body.description,
                     "url": request.body.url
-                }
+                },
+                "members": [
+                    request.body.owner
+                ]
             });
 
             // Write json content

@@ -142,14 +142,17 @@ router.post("/edit", function(request, response, next) {
             var edit = true;
         }
         else {
-            var id = jobs.length + 1;
+            var id = 1;
+            for(job in jobs) {
+                if(jobs[job].id >= id)
+                    id = jobs[job].id + 1;
+            }
             var edit = false;
         }
 
-        console.info(request.body);
-
         // Job data
         if(!edit) {
+            console.info(request.body);
             jobs.push({
                 "id": parseInt(id),
                 "status": false,
@@ -165,8 +168,8 @@ router.post("/edit", function(request, response, next) {
                     "country": request.body.country
                 },
                 "validity": new Date(
-                    parseInt(request.body.year),
-                    parseInt(request.body.month),
+                    parseInt(request.body.year) + '-' +
+                    parseInt(request.body.month) + '-' +
                     parseInt(request.body.day)).toLocaleString()
             });
 
@@ -200,8 +203,8 @@ router.post("/edit", function(request, response, next) {
                         "country": request.body.country
                     },
                     "validity": new Date(
-                        parseInt(request.body.year),
-                        parseInt(request.body.month),
+                        parseInt(request.body.year) + '-' +
+                        parseInt(request.body.month) + '-' +
                         parseInt(request.body.day)).toLocaleString()
                 };
 
