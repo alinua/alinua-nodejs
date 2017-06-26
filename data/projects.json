@@ -1,0 +1,16 @@
+[
+    {
+        "id": 1,
+        "status": true,
+        "date": "2017-05-19 08h22",
+        "title": "AlinUA",
+        "description": {
+            "url": "https://github.com/alinua",
+            "content": "Students social network project"
+        },
+        "members": [
+            "mast3rinf0"
+        ],
+        "owner": "mast3rinf0"
+    }
+]

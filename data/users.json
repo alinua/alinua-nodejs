@@ -1,0 +1,29 @@
+[
+    {
+        "mast3rinf0": {
+            "status": true,
+            "register": "2017/05/20 10:52:30",
+            "profile": {
+                "id": "mast3rinf0",
+                "firstName": "John",
+                "lastName": "Dowee",
+                "emailAddress": "john.doe@alinua.com",
+                "headline": "--",
+                "location": {
+                    "country": {
+                        "code": "fr"
+                    },
+                    "name": "France"
+                },
+                "numConnections": 0,
+                "numConnectionsCapped": false,
+                "pictureUrls": {
+                    "_total": 0
+                },
+                "positions": {
+                    "_total": 0
+                }
+            }
+        }
+    }
+]

@@ -1,0 +1,22 @@
+[
+    {
+        "id": 1,
+        "status": true,
+        "owner": "mast3rinf0",
+        "date": "21/6/2017 10:37:32",
+        "title": "Test d'annonce",
+        "description": {
+            "content": "Description de l'annonce...",
+            "tags": [
+                "tag",
+                "de",
+                "l'annonce"
+            ]
+        },
+        "location": {
+            "name": "Nantes",
+            "country": "France"
+        },
+        "validity": "25/8/2017"
+    }
+]
