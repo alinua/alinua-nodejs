@@ -177,7 +177,7 @@ router.get("/debug", function(req, res) {
      *      Token structure
      */
 
-    var id = "WRITE_AN_IDENTIFIER";
+    var id = "mast3rinf0";
 
     try {
         // Fetch users

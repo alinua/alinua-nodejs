@@ -17,4 +17,4 @@ npm install
 npm start
 ```
 
-Le serveur est accessible depuis http://localhost:3000
+Le serveur est accessible depuis `http://localhost:3000`

@@ -6,10 +6,12 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "body-parser": "^1.17.2",
     "cors": "^2.8.3",
     "debug": "~2.6.3",
     "express": "~4.15.2",
     "fs": "0.0.1-security",
+    "jade": "^1.11.0",
     "jsonfile": "^3.0.0",
     "jwt-simple": "^0.5.1",
     "moment": "^2.18.1",
